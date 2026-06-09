@@ -1,0 +1,47 @@
+name: Build macOS App
+
+# This triggers the build every time you push code to the 'main' branch,
+# or when you manually trigger it from the GitHub Actions tab.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+    # 1. Pull down your source code into the Mac runner
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # 2. Set up Python on the Mac environment
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' # Change to match your local Python version if needed
+
+    # 3. Install your project's dependencies
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller customtkinter groq httpx httpcore keyboard darkdetect pyperclip
+
+    # 4. Run PyInstaller using your existing macOS spec file
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller promptly_ai_mac.spec
+
+    # 5. Compress the build output because macOS .app bundles are actually folders
+    - name: Compress App Bundle
+      run: |
+        cd dist
+        zip -r PromptlyAI-Mac.zip PromptlyAI.app
+
+    # 6. Upload the zip file so you can download it from your browser
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PromptlyAI-macOS-Bundle
+        path: dist/PromptlyAI-Mac.zip
